@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CheckCircle } from 'lucide-react'
 
 export default function RegisterPage() {
   const [name, setName] = useState('')
@@ -13,7 +12,7 @@ export default function RegisterPage() {
   const [role, setRole] = useState<'fan' | 'creator'>('fan')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const [success, setSuccess] = useState(false)
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,10 +22,15 @@ export default function RegisterPage() {
     try {
       const supabase = createClient()
 
-      // Sign up user
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: name,
+            role: role,
+          },
+        },
       })
 
       if (signUpError) {
@@ -34,61 +38,70 @@ export default function RegisterPage() {
         return
       }
 
-      if (!authData.user) {
-        setError('Registration failed')
-        return
-      }
-
-      // Create profile
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        email,
-        full_name: name,
-        role,
-      })
-
-      if (profileError) {
-        setError(profileError.message)
-        return
-      }
-
-      // If creator, create creator profile
-      if (role === 'creator') {
-        const { error: creatorError } = await supabase.from('creators').insert({
-          user_id: authData.user.id,
-          title: name,
+      // If session exists (email confirmation disabled), create profile now
+      if (data.session && data.user) {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email,
+          full_name: name,
+          role,
         })
 
-        if (creatorError) {
-          setError(creatorError.message)
-          return
+        if (role === 'creator') {
+          await supabase.from('creators').upsert({
+            user_id: data.user.id,
+            title: name,
+          })
         }
+
+        window.location.href = '/dashboard'
+        return
       }
 
-      router.push('/auth/login')
+      // Email confirmation required
+      setSuccess(true)
+
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError('Error al conectar con el servidor. Verifica tu conexión.')
     } finally {
       setLoading(false)
     }
   }
 
+  if (success) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <CheckCircle size={64} className="mx-auto mb-4" style={{ color: '#d4af37' }} />
+          <h1 className="text-3xl font-bold mb-2">¡Cuenta creada!</h1>
+          <p className="text-zinc-400 mb-6">
+            Te hemos enviado un email de confirmación a <strong>{email}</strong>.
+            Haz clic en el enlace del email para activar tu cuenta.
+          </p>
+          <p className="text-zinc-500 text-sm">¿No lo ves? Revisa la carpeta de spam.</p>
+          <Link href="/auth/login" className="mt-6 inline-block py-3 px-8 rounded-lg font-semibold text-black" style={{ backgroundColor: '#d4af37' }}>
+            Ir a Iniciar Sesión
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      {/* Header */}
       <div className="bg-black/80 backdrop-blur-md border-b border-zinc-800 p-4">
-        <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-gold transition">
+        <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition">
           <ArrowLeft size={20} />
           Volver
         </Link>
       </div>
 
-      {/* Register Form */}
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2">Crear Cuenta</h1>
-            <p className="text-zinc-400">Únete a DivazaFans hoy</p>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: '#d4af37' }}>DivazaFans</h1>
+            <p className="text-xl font-semibold">Crear Cuenta</p>
+            <p className="text-zinc-400 mt-1">Únete a la plataforma exclusiva</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
@@ -98,7 +111,7 @@ export default function RegisterPage() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-gold transition"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-yellow-500 transition"
                 placeholder="Tu nombre"
                 required
               />
@@ -110,7 +123,7 @@ export default function RegisterPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-gold transition"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-yellow-500 transition"
                 placeholder="tu@email.com"
                 required
               />
@@ -122,34 +135,23 @@ export default function RegisterPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-gold transition"
-                placeholder="••••••••"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-yellow-500 transition"
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Tipo de Cuenta</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer flex-1">
-                  <input
-                    type="radio"
-                    value="fan"
-                    checked={role === 'fan'}
-                    onChange={(e) => setRole(e.target.value as 'fan' | 'creator')}
-                    className="accent-gold"
-                  />
-                  <span>Fan</span>
+              <div className="grid grid-cols-2 gap-3">
+                <label className={`flex items-center justify-center gap-2 cursor-pointer p-3 rounded-lg border-2 transition ${role === 'fan' ? 'border-yellow-500 bg-yellow-500/10' : 'border-zinc-700 hover:border-zinc-500'}`}>
+                  <input type="radio" value="fan" checked={role === 'fan'} onChange={() => setRole('fan')} className="hidden" />
+                  <span>🌟 Fan</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer flex-1">
-                  <input
-                    type="radio"
-                    value="creator"
-                    checked={role === 'creator'}
-                    onChange={(e) => setRole(e.target.value as 'fan' | 'creator')}
-                    className="accent-gold"
-                  />
-                  <span>Creadora</span>
+                <label className={`flex items-center justify-center gap-2 cursor-pointer p-3 rounded-lg border-2 transition ${role === 'creator' ? 'border-yellow-500 bg-yellow-500/10' : 'border-zinc-700 hover:border-zinc-500'}`}>
+                  <input type="radio" value="creator" checked={role === 'creator'} onChange={() => setRole('creator')} className="hidden" />
+                  <span>💎 Creadora</span>
                 </label>
               </div>
             </div>
@@ -166,14 +168,14 @@ export default function RegisterPage() {
               className="w-full py-3 rounded-lg font-semibold text-black transition hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: '#d4af37' }}
             >
-              {loading ? 'Registrando...' : 'Crear Cuenta'}
+              {loading ? 'Creando cuenta...' : 'Crear Cuenta Gratis'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-zinc-400">
               ¿Ya tienes cuenta?{' '}
-              <Link href="/auth/login" className="text-gold hover:underline">
+              <Link href="/auth/login" className="hover:underline" style={{ color: '#d4af37' }}>
                 Inicia sesión
               </Link>
             </p>
