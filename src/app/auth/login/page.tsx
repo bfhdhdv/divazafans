@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { ArrowLeft } from 'lucide-react'
@@ -11,7 +10,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,13 +24,20 @@ export default function LoginPage() {
       })
 
       if (signInError) {
-        setError(signInError.message)
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Email o contraseña incorrectos. Por favor, intenta de nuevo.')
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setError('Por favor, confirma tu email antes de iniciar sesión.')
+        } else {
+          setError(`Error: ${signInError.message}`)
+        }
         return
       }
 
-      router.push('/dashboard')
+      // Use window.location.href for more reliable redirect
+      window.location.href = '/dashboard'
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError('Error de conexión. Por favor, intenta de nuevo más tarde.')
     } finally {
       setLoading(false)
     }
@@ -42,7 +47,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
       <div className="bg-black/80 backdrop-blur-md border-b border-zinc-800 p-4">
-        <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-gold transition">
+        <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-gold transition" style={{ textDecoration: 'none', color: 'inherit' }}>
           <ArrowLeft size={20} />
           Volver
         </Link>
@@ -66,6 +71,7 @@ export default function LoginPage() {
                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-gold transition"
                 placeholder="tu@email.com"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -78,6 +84,7 @@ export default function LoginPage() {
                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-gold transition"
                 placeholder="••••••••"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -93,14 +100,14 @@ export default function LoginPage() {
               className="w-full py-3 rounded-lg font-semibold text-black transition hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: '#d4af37' }}
             >
-              {loading ? 'Iniciando...' : 'Iniciar Sesión'}
+              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-zinc-400">
               ¿No tienes cuenta?{' '}
-              <Link href="/auth/register" className="text-gold hover:underline">
+              <Link href="/auth/register" className="font-semibold transition" style={{ color: '#d4af37', textDecoration: 'none' }}>
                 Registrate aquí
               </Link>
             </p>

@@ -3,10 +3,18 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X, Star, Lock, Users, Zap } from 'lucide-react'
+import { Menu, X, Star, Zap } from 'lucide-react'
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen)
+  }
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false)
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -20,18 +28,18 @@ export default function Home() {
 
             {/* Desktop menu */}
             <div className="hidden md:flex gap-8 items-center">
-              <Link href="#" className="hover:text-gold transition">
-                Explorar
+              <Link href="/creators" className="hover:text-gold transition" style={{ color: 'inherit', textDecoration: 'none' }}>
+                Explorar Creadores
               </Link>
-              <Link href="#pricing" className="hover:text-gold transition">
+              <Link href="#pricing" className="hover:text-gold transition" style={{ color: 'inherit', textDecoration: 'none' }}>
                 Precios
               </Link>
-              <Link href="/auth/login" className="hover:text-gold transition">
-                Login
+              <Link href="/auth/login" className="hover:text-gold transition" style={{ color: 'inherit', textDecoration: 'none' }}>
+                Iniciar sesión
               </Link>
               <Link
                 href="/auth/register"
-                className="px-6 py-2 rounded-lg font-semibold text-black transition"
+                className="px-6 py-2 rounded-lg font-semibold text-black transition hover:opacity-90"
                 style={{ backgroundColor: '#d4af37' }}
               >
                 Registrarse
@@ -40,8 +48,9 @@ export default function Home() {
 
             {/* Mobile menu button */}
             <button
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2"
+              onClick={toggleMobileMenu}
+              aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -49,20 +58,36 @@ export default function Home() {
 
           {/* Mobile menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden pb-4 space-y-4">
-              <Link href="#" className="block hover:text-gold transition">
-                Explorar
+            <div className="md:hidden pb-4 space-y-4 border-t border-zinc-800 pt-4">
+              <Link 
+                href="/creators" 
+                className="block hover:text-gold transition py-2"
+                onClick={closeMobileMenu}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+              >
+                Explorar Creadores
               </Link>
-              <Link href="#pricing" className="block hover:text-gold transition">
+              <Link 
+                href="#pricing" 
+                className="block hover:text-gold transition py-2"
+                onClick={closeMobileMenu}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+              >
                 Precios
               </Link>
-              <Link href="/auth/login" className="block hover:text-gold transition">
-                Login
+              <Link 
+                href="/auth/login" 
+                className="block hover:text-gold transition py-2"
+                onClick={closeMobileMenu}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+              >
+                Iniciar sesión
               </Link>
               <Link
                 href="/auth/register"
-                className="block px-6 py-2 rounded-lg font-semibold text-black text-center transition"
+                className="block px-6 py-2 rounded-lg font-semibold text-black text-center transition hover:opacity-90"
                 style={{ backgroundColor: '#d4af37' }}
+                onClick={closeMobileMenu}
               >
                 Registrarse
               </Link>
@@ -89,12 +114,12 @@ export default function Home() {
               className="px-8 py-4 rounded-lg font-semibold text-black transition hover:scale-105"
               style={{ backgroundColor: '#d4af37' }}
             >
-              Comenzar Ahora
+              Ser Creadora
             </Link>
             <Link
               href="/creators"
-              className="px-8 py-4 rounded-lg font-semibold border-2 border-zinc-600 hover:border-gold transition"
-              style={{ borderColor: '#d4af37' }}
+              className="px-8 py-4 rounded-lg font-semibold border-2 transition hover:scale-105"
+              style={{ borderColor: '#d4af37', color: 'inherit', textDecoration: 'none' }}
             >
               Explorar Creadores
             </Link>
@@ -156,6 +181,7 @@ export default function Home() {
                 key={i}
                 href={`/creators/${i + 1}`}
                 className="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition border border-zinc-800"
+                style={{ textDecoration: 'none', color: 'inherit' }}
               >
                 <div className="relative h-48 bg-gradient-to-b from-gold/20 to-zinc-900">
                   <Image
@@ -163,7 +189,8 @@ export default function Home() {
                     alt={`Creator ${i + 1}`}
                     width={150}
                     height={150}
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-gold"
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full border-4"
+                    style={{ borderColor: '#d4af37' }}
                   />
                 </div>
                 <div className="p-6">
@@ -196,22 +223,22 @@ export default function Home() {
           <h2 className="text-4xl font-bold text-center mb-16">Planes de Subscripción</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { name: 'Gratis', price: '0€', color: 'border-zinc-700' },
+              { name: 'Gratis', price: '0€', borderColor: '#27272a' },
               {
                 name: 'Premium',
                 price: '2.99€',
-                color: '#d4af37',
+                borderColor: '#d4af37',
                 popular: true,
                 features: ['Contenido Premium', 'Mensajes Directos', 'Acceso Exclusivo']
               },
-              { name: 'VIP', price: '5.99€', color: 'border-zinc-700' }
+              { name: 'VIP', price: '5.99€', borderColor: '#27272a' }
             ].map((plan, i) => (
               <div
                 key={i}
                 className={`bg-zinc-900 rounded-xl p-8 border-2 transition ${
                   plan.popular ? 'scale-105 relative' : ''
                 }`}
-                style={{ borderColor: plan.color }}
+                style={{ borderColor: plan.borderColor }}
               >
                 {plan.popular && (
                   <div
@@ -225,7 +252,7 @@ export default function Home() {
                 <div className="text-4xl font-bold mb-6" style={{ color: '#d4af37' }}>
                   {plan.price}
                 </div>
-                {plan.features && (
+                {'features' in plan && plan.features && (
                   <ul className="space-y-2 mb-6">
                     {plan.features.map((f, j) => (
                       <li key={j} className="flex items-center gap-2">
@@ -235,12 +262,13 @@ export default function Home() {
                     ))}
                   </ul>
                 )}
-                <button
-                  className="w-full py-3 rounded-lg font-semibold text-black transition hover:opacity-90"
-                  style={{ backgroundColor: '#d4af37' }}
+                <Link
+                  href="/auth/register"
+                  className="block w-full py-3 rounded-lg font-semibold text-black transition hover:opacity-90 text-center"
+                  style={{ backgroundColor: '#d4af37', textDecoration: 'none' }}
                 >
-                  {plan.name === 'Gratis' ? 'Crear Cuenta' : 'Suscribirse'}
-                </button>
+                  {plan.name === 'Gratis' ? 'Crear Cuenta' : 'Empezar'}
+                </Link>
               </div>
             ))}
           </div>
@@ -257,7 +285,7 @@ export default function Home() {
           <Link
             href="/auth/register"
             className="inline-block px-8 py-4 rounded-lg font-semibold text-black transition hover:scale-105"
-            style={{ backgroundColor: '#d4af37' }}
+            style={{ backgroundColor: '#d4af37', textDecoration: 'none' }}
           >
             Registrarse Gratis
           </Link>
@@ -275,15 +303,15 @@ export default function Home() {
           <div className="text-center text-zinc-500 text-sm">
             <p>© 2024 DivazaFans. Todos los derechos reservados.</p>
             <p className="mt-2">
-              <Link href="#" className="hover:text-gold transition">
+              <Link href="#" className="hover:text-gold transition" style={{ color: 'inherit', textDecoration: 'none' }}>
                 Términos
               </Link>
               {' • '}
-              <Link href="#" className="hover:text-gold transition">
+              <Link href="#" className="hover:text-gold transition" style={{ color: 'inherit', textDecoration: 'none' }}>
                 Privacidad
               </Link>
               {' • '}
-              <Link href="#" className="hover:text-gold transition">
+              <Link href="#" className="hover:text-gold transition" style={{ color: 'inherit', textDecoration: 'none' }}>
                 Contacto
               </Link>
             </p>
